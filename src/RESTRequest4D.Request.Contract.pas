@@ -6,6 +6,7 @@ uses RESTRequest4D.Response.Contract,
   {$IF NOT (DEFINED(RR4D_INDY) or DEFINED(FPC) or DEFINED(RR4D_NETHTTP))}
     REST.Types,
   {$ENDIF}
+  {$IF DEFINED(RR4D_ICS)} OverbyteIcsSslHttpRest, {$ENDIF}
   {$IFDEF FPC}
     SysUtils, fpjson, Classes, DB;
   {$ELSE}
@@ -47,7 +48,7 @@ type
     {$IF DEFINED(RR4D_NETHTTP)}
     function Asynchronous(const AValue: Boolean): IRequest;
     {$ENDIF}
-    {$IF DEFINED(RR4D_INDY) or DEFINED(FPC) or DEFINED(RR4D_SYNAPSE) or DEFINED(RR4D_NETHTTP)}
+    {$IF DEFINED(RR4D_INDY) or DEFINED(FPC) or DEFINED(RR4D_SYNAPSE) or DEFINED(RR4D_ICS)  or DEFINED(RR4D_NETHTTP)}
     function AddParam(const AName, AValue: string): IRequest;
     function AddBody(const AContent: string): IRequest; overload;
     function AddHeader(const AName, AValue: string): IRequest;
@@ -73,6 +74,8 @@ type
     {$IF DEFINED(RR4D_INDY) or DEFINED(FPC) or DEFINED(RR4D_SYNAPSE) or DEFINED(RR4D_NETHTTP)}
     function AddFile(const AFieldName: string; const AFileName: string; const AContentType: string = ''): IRequest; overload;
     function AddFile(const AFieldName: string; const AValue: TStream; const AFileName: string = ''; const AContentType: string = ''): IRequest; overload;
+    {$ELSEIF DEFINED(RR4D_ICS)}
+    function AddFile(const AFileName: string; UploadStrat:THttpUploadStrat): IRequest; overload;
     {$ELSE}
     function AddFile(const AFieldName: string; const AFileName: string; const AContentType: TRESTContentType = TRESTContentType.ctNone): IRequest; overload;
     function AddFile(const AFieldName: string; const AValue: TStream; const AFileName: string = ''; const AContentType: TRESTContentType = TRESTContentType.ctNone): IRequest; overload;
