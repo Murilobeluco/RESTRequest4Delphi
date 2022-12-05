@@ -120,9 +120,9 @@ begin
   begin
     LContent := Content.Trim;
     if LContent.StartsWith('{') then
-      FJSONValue := (TJSONObject.ParseJSONValue(TEncoding.ASCII.GetBytes(LContent), 0) as TJSONObject)
+      FJSONValue := (TJSONObject.ParseJSONValue(TEncoding.UTF8.GetBytes(LContent), 0) as TJSONObject)
     else if LContent.StartsWith('[') then
-      FJSONValue := (TJSONObject.ParseJSONValue(TEncoding.ASCII.GetBytes(LContent), 0) as TJSONArray)
+      FJSONValue := (TJSONObject.ParseJSONValue(TEncoding.UTF8.GetBytes(LContent), 0) as TJSONArray)
     else
       raise Exception.Create('The return content is not a valid JSON value.');
   end;

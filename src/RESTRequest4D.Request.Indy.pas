@@ -6,7 +6,7 @@ unit RESTRequest4D.Request.Indy;
 
 interface
 
-uses RESTRequest4D.Request.Contract, RESTRequest4D.Response.Contract, IdHTTP, IdSSLOpenSSL, IdCTypes, IdSSLOpenSSLHeaders,
+uses RESTRequest4D.Request.Contract, RESTRequest4D.Response.Contract, IdHTTP, IdSSLOpenSSL, IdCTypes, IdSSLOpenSSLHeaders, IdOpenSSLIOHandlerClient, IdOpenSSLOptionsClient,
   RESTRequest4D.Utils, IdMultipartFormData,
   {$IFDEF FPC}
     DB, Classes, fpjson, jsonparser, fpjsonrtti, SysUtils;
@@ -22,6 +22,7 @@ type
     FParams: TStrings;
     FUrlSegments: TStrings;
     FIdHTTP: TIdHTTP;
+    FSSL:TIdOpenSSLIOHandlerClient;
     FIdSSLIOHandlerSocketOpenSSL: TIdSSLIOHandlerSocketOpenSSL;
     FBaseURL: string;
     FResource: string;
@@ -385,7 +386,7 @@ end;
 
 procedure TRequestIndy.OnStatusInfoEx(ASender: TObject; const AsslSocket: PSSL; const AWhere, Aret: TIdC_INT; const AType, AMsg: string);
 begin
-  SSL_set_tlsext_host_name(AsslSocket, FIdHTTP.URL.Host);
+//  SSL_set_tlsext_host_name(AsslSocket, FIdHTTP.URL.Host);
 end;
 
 function TRequestIndy.AddParam(const AName, AValue: string): IRequest;
@@ -574,9 +575,13 @@ begin
   FIdHTTP.HandleRedirects := True;
 
   FIdSSLIOHandlerSocketOpenSSL := TIdSSLIOHandlerSocketOpenSSL.Create;
+  //FIdSSLIOHandlerSocketOpenSSL.OnStatusInfoEx := Self.OnStatusInfoEx;
   FIdHTTP.IOHandler := FIdSSLIOHandlerSocketOpenSSL;
-  FIdSSLIOHandlerSocketOpenSSL.SSLOptions.SSLVersions := [sslvTLSv1, sslvTLSv1_1, sslvTLSv1_2];
-  FIdSSLIOHandlerSocketOpenSSL.OnStatusInfoEx := Self.OnStatusInfoEx;
+
+  FSSL := TIdOpenSSLIOHandlerClient.Create(FIdHTTP);
+  FSSL.Options.VerifyServerCertificate := (FSSL.Options.VerifyCertificate<>'');
+
+  FIdHTTP.IOHandler := FSSL;
 
   FHeaders := TStringList.Create;
   FResponse := TResponseIndy.Create(FIdHTTP);
@@ -584,7 +589,7 @@ begin
   FUrlSegments := TStringList.Create;
 
   FStreamResult := TStringStream.Create;
-  Self.ContentType('application/json');
+//  Self.ContentType('application/json');
   FRetries := 0;
   FIdMultiPartFormDataStream := TIdMultiPartFormDataStream.Create;
 end;
@@ -592,6 +597,8 @@ end;
 destructor TRequestIndy.Destroy;
 begin
   FreeAndNil(FIdSSLIOHandlerSocketOpenSSL);
+  if Assigned(FSSL) then
+    FreeAndNil(FSSL);
   FreeAndNil(FIdHTTP);
   if Assigned(FStreamSend) then
     FreeAndNil(FStreamSend);
