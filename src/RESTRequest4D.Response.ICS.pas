@@ -20,7 +20,7 @@ type
     FSslHttpRest: TSslHttpRest;
     FLogICS:TStringList;
     function Content: string;
-    function ContentLength: Cardinal;
+    function ContentLength: int64;
     function ContentType: string;
     function ContentEncoding: string;
     function ContentStream: TStream;
@@ -104,9 +104,9 @@ begin
   Result := FSslHttpRest.ContentEncoding;
 end;
 
-function TResponseICS.ContentLength: Cardinal;
+function TResponseICS.ContentLength: Int64;
 begin
-  Result := FSslHttpRest.ContentLength;
+  Result := FSslHttpRest.RcvdCount;
 end;
 
 function TResponseICS.ContentStream: TStream;

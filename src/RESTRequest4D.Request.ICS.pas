@@ -409,7 +409,7 @@ constructor TRequestICS.Create;
 begin
   FSslHttpRest := TSslHttpRest.Create(nil);
   OverbyteIcsWSocket.LoadSsl;
-  FSslHttpRest.DebugLevel := DebugSsl;
+  FSslHttpRest.DebugLevel := DebugBody;
   FBodyRaw     := TStringList.Create;
   FUrlSegments := TStringList.Create;
   FBodyRaw.LineBreak := '';
