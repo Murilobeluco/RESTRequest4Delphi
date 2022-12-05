@@ -116,6 +116,8 @@ end;
 function TRequestICS.AddField(const AFieldName, AValue: string): IRequest;
 begin
   result := self;
+  FBodyRaw.Clear;
+//  FSslHttpRest.RestParams.PContent := PContBodyUrlEn;
   FSslHttpRest.RestParams.AddItem(AFieldName, AValue);
 end;
 
@@ -406,6 +408,7 @@ end;
 constructor TRequestICS.Create;
 begin
   FSslHttpRest := TSslHttpRest.Create(nil);
+  OverbyteIcsWSocket.LoadSsl;
   FSslHttpRest.DebugLevel := DebugSsl;
   FBodyRaw     := TStringList.Create;
   FUrlSegments := TStringList.Create;
@@ -415,6 +418,7 @@ end;
 
 destructor TRequestICS.Destroy;
 begin
+  OverbyteIcsWSocket.UnloadSsl;
   FreeAndNil(FSslHttpRest);
   FreeAndNil(FBodyRaw);
   FreeAndNil(FUrlSegments);
