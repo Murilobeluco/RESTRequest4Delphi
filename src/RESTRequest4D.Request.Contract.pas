@@ -82,7 +82,7 @@ type
     {$ENDIF}
     function Proxy(const AServer, APassword, AUsername: string; const APort: Integer): IRequest;
     function DeactivateProxy: IRequest;
-    {$IF DEFINED(RR4D_INDY)}
+    {$IF DEFINED(RR4D_INDY) or DEFINED(RR4D_ICS)}
     function CertFile(const APath: string): IRequest;
     function KeyFile(const APath: string): IRequest;
     {$ENDIF}

@@ -75,6 +75,8 @@ type
     function AddField(const AFieldName: string; const AValue: string): IRequest; overload;
     function Proxy(const AServer, APassword, AUsername: string; const APort: Integer): IRequest;
     function DeactivateProxy: IRequest;
+    function CertFile(const APath: string): IRequest;
+    function KeyFile(const APath: string): IRequest;
     function MakeURL(const AIncludeParams: Boolean = True): string;
   protected
     procedure DoAfterExecute; virtual;
@@ -115,8 +117,8 @@ function TRequestICS.AddField(const AFieldName, AValue: string): IRequest;
 begin
   result := self;
   FBodyRaw.Clear;
-  FSslHttpRest.RestParams.PContent := PContBodyUrlEn;
-  FBodyRaw.Add(Format('%s=%s', [AFieldName, AValue]));
+//  FSslHttpRest.RestParams.PContent := PContBodyUrlEn;
+  FSslHttpRest.RestParams.AddItem(AFieldName, AValue);
 end;
 
 function TRequestICS.AddFile(const AFileName: string; UploadStrat: THttpUploadStrat): IRequest;
@@ -168,6 +170,12 @@ function TRequestICS.Get: IResponse;
 begin
   Result := FResponse;
   ExecuteRequest(mrGET);
+end;
+
+function TRequestICS.KeyFile(const APath: string): IRequest;
+begin
+  Result := Self;
+  FSslHttpRest.SslContext.SslCertX509.PrivateKeyLoadFromPemFile(APath);
 end;
 
 function TRequestICS.DataSetAdapter(const ADataSet: TDataSet): IRequest;
@@ -256,16 +264,16 @@ begin
   end;
   if not AIncludeParams then
     Exit;
-  if FSslHttpRest.RestParams.Count > 0 then
-  begin
-    Result := Result + '?';
-    for I := 0 to Pred(FSslHttpRest.RestParams.Count) do
-    begin
-      if I > 0 then
-        Result := Result + '&';
-      Result := Result + FSslHttpRest.RestParams.Items[I].DisplayName;
-    end;
-  end;
+//  if FSslHttpRest.RestParams.Count > 0 then
+//  begin
+//    Result := Result + '?';
+//    for I := 0 to Pred(FSslHttpRest.RestParams.Count) do
+//    begin
+//      if I > 0 then
+//        Result := Result + '&';
+//      Result := Result + FSslHttpRest.RestParams.Items[I].DisplayName;
+//    end;
+//  end;
 end;
 
 function TRequestICS.AddParam(const AName, AValue: string): IRequest;
@@ -313,6 +321,12 @@ begin
     if AOwns then
       AContent.Free;
   end;
+end;
+
+function TRequestICS.CertFile(const APath: string): IRequest;
+begin
+  Result := Self;
+  FSslHttpRest.SslContext.SslCertX509.LoadFromPemFile(APath);
 end;
 
 function TRequestICS.ClearBody: IRequest;
@@ -394,8 +408,8 @@ end;
 constructor TRequestICS.Create;
 begin
   FSslHttpRest := TSslHttpRest.Create(nil);
-  FSslHttpRest.DebugLevel := DebugSsl;
   OverbyteIcsWSocket.LoadSsl;
+  FSslHttpRest.DebugLevel := DebugSsl;
   FBodyRaw     := TStringList.Create;
   FUrlSegments := TStringList.Create;
   FBodyRaw.LineBreak := '';
@@ -436,7 +450,7 @@ begin
         mrGET:
           FSslHttpRest.RestRequest(httpGET, (MakeURL), False);
         mrPOST:
-          FSslHttpRest.RestRequest(httpPOST, (MakeURL), False,  FBodyRaw.Text);
+          FSslHttpRest.RestRequest(httpPOST, (MakeURL), False, FBodyRaw.Text);
         mrPUT:
           FSslHttpRest.RestRequest(httpPUT, (MakeURL), False, FBodyRaw.Text);
         mrPATCH:
