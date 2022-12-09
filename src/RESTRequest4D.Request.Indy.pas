@@ -18,7 +18,6 @@ type
   TRequestIndy = class(TInterfacedObject, IRequest)
   private
     FIdMultiPartFormDataStream: TIdMultiPartFormDataStream;
-    FHeaders: TStrings;
     FParams: TStrings;
     FUrlSegments: TStrings;
     FIdHTTP: TIdHTTP;
@@ -239,6 +238,7 @@ begin
       LAttempts := 0;
       Self.DoAfterExecute;
     except
+      on E: Exception do
       begin
         LAttempts := LAttempts - 1;
         if LAttempts = 0 then
@@ -293,13 +293,13 @@ end;
 function TRequestIndy.CertFile(const APath: string): IRequest;
 begin
   Result := Self;
-  FIdSSLIOHandlerSocketOpenSSL.SSLOptions.CertFile := APath;
+  FSSL.Options.CertFile := APath;
 end;
 
 function TRequestIndy.KeyFile(const APath: string): IRequest;
 begin
   Result := Self;
-  FIdSSLIOHandlerSocketOpenSSL.SSLOptions.KeyFile := APath;
+  FSSL.Options.CertKey := APath;
 end;
 
 function TRequestIndy.Delete: IResponse;
@@ -323,9 +323,9 @@ begin
   Result := Self;
   if AName.Trim.IsEmpty or AValue.Trim.IsEmpty then
     Exit;
-  if FHeaders.IndexOf(AName) < 0 then
-    FHeaders.Add(AName);
-  FIdHTTP.Request.CustomHeaders.AddValue(AName, AValue);
+
+  if FIdHTTP.Request.CustomHeaders.IndexOf(AName) < 0 then
+    FIdHTTP.Request.CustomHeaders.AddValue(AName, AValue);
 end;
 
 function TRequestIndy.Token(const AToken: string): IRequest;
@@ -507,12 +507,9 @@ begin
 end;
 
 function TRequestIndy.ClearHeaders: IRequest;
-var
-  I: Integer;
 begin
   Result := Self;
-  for I := 0 to Pred(FHeaders.Count) do
-    FIdHTTP.Request.CustomHeaders.Delete(FIdHTTP.Request.CustomHeaders.IndexOfName(FHeaders[I]));
+  FIdHTTP.Request.CustomHeaders.Clear;
 end;
 
 function TRequestIndy.Accept: string;
@@ -573,36 +570,30 @@ begin
   FIdHTTP.Request.Connection := 'Keep-Alive';
   FIdHTTP.Request.UserAgent := 'User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.96 Safari/537.36';
   FIdHTTP.HandleRedirects := True;
-
-  FIdSSLIOHandlerSocketOpenSSL := TIdSSLIOHandlerSocketOpenSSL.Create;
-  //FIdSSLIOHandlerSocketOpenSSL.OnStatusInfoEx := Self.OnStatusInfoEx;
-  FIdHTTP.IOHandler := FIdSSLIOHandlerSocketOpenSSL;
+  FIdHTTP.ProtocolVersion := pv1_1;
 
   FSSL := TIdOpenSSLIOHandlerClient.Create(FIdHTTP);
   FSSL.Options.VerifyServerCertificate := (FSSL.Options.VerifyCertificate<>'');
 
   FIdHTTP.IOHandler := FSSL;
 
-  FHeaders := TStringList.Create;
   FResponse := TResponseIndy.Create(FIdHTTP);
   FParams := TStringList.Create;
   FUrlSegments := TStringList.Create;
 
-  FStreamResult := TStringStream.Create;
-//  Self.ContentType('application/json');
+  FStreamResult := TStringStream.Create('', TEncoding.UTF8);
+  Self.ContentType('application/json');
   FRetries := 0;
   FIdMultiPartFormDataStream := TIdMultiPartFormDataStream.Create;
 end;
 
 destructor TRequestIndy.Destroy;
 begin
-  FreeAndNil(FIdSSLIOHandlerSocketOpenSSL);
   if Assigned(FSSL) then
     FreeAndNil(FSSL);
   FreeAndNil(FIdHTTP);
   if Assigned(FStreamSend) then
     FreeAndNil(FStreamSend);
-  FreeAndNil(FHeaders);
   FreeAndNil(FParams);
   FreeAndNil(FUrlSegments);
   FreeAndNil(FStreamResult);
