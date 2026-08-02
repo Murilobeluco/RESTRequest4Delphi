@@ -7,7 +7,7 @@ unit RESTRequest4D.Request.Synapse;
 interface
 
 uses Classes, SysUtils, DB, RESTRequest4D.Request.Contract, RESTRequest4D.Response.Contract, RESTRequest4D.Utils,
-  httpsend, ssl_openssl3, blcksock, Generics.Collections, RESTRequest4D.Request.Adapter.Contract, dialogs, synautil,
+  httpsend, ssl_openssl3, blcksock, Generics.Collections, RESTRequest4D.Request.Adapter.Contract, synautil,
   {$IFDEF FPC}
     fpjson, fpjsonrtti, base64;
   {$ELSE}
@@ -126,7 +126,7 @@ type
 
 implementation
 
-uses RESTRequest4D.Response.Synapse, RESTRequest4D.Utils;
+uses RESTRequest4D.Response.Synapse;
 
 const
   _CRLF = #13#10;
@@ -221,7 +221,7 @@ begin
     except
       on e: Exception do
       begin
-        ShowMessage(e.Message);
+        //ShowMessage(e.Message);
         LAttempts := LAttempts - 1;
         if LAttempts = 0 then
         raise;
@@ -722,14 +722,12 @@ end;
 
 procedure TRequestSynapse.DoSocketStatus(Sender: TObject;
   Reason: THookSocketReason; const Value: string);
-
   function GetSizeFromHeader(Header: String): integer;
   var
     LStrList : TStringList;
   begin
     //the download size is contained in the header (e.g.: Content-Length: 3737722)
     Result:= -1;
-
     if Pos('Content-Length:', Header) <> 0 then
     begin
       LStrList := TStringList.Create();
@@ -746,29 +744,27 @@ procedure TRequestSynapse.DoSocketStatus(Sender: TObject;
       end;
     end;
   end;
-
 var
   Bytes: Int64;
   LIsProgressAbort: Boolean;
+  LIndex: Integer;
 begin
   if (not (Assigned(FOnReceiveProgress))) and (not (Assigned(FOnSendProgress))) then
     Exit; // Runs only if one of them is assigned
-
   case Reason of
     HR_SocketClose, HR_ResolvingBegin:
       begin
         FProgressContentLength := -1;
         FProgressCurrent := 0;
       end;
-
   else
     if FProgressContentLength = -1 then
     begin
       if Pos('Content-Length:'.ToUpper, FHTTPSend.Headers.Text.ToUpper) <> 0 then
       begin
-        for var i:= 0 to FHTTPSend.Headers.Count - 1 do
+        for LIndex := 0 to FHTTPSend.Headers.Count - 1 do
         begin
-          FProgressContentLength:= GetSizeFromHeader(FHTTPSend.Headers[i]);
+          FProgressContentLength:= GetSizeFromHeader(FHTTPSend.Headers[LIndex]);
           if FProgressContentLength <> -1 then
             Break;
         end;
@@ -798,7 +794,6 @@ begin
               FOnSendProgress(FProgressContentLength, FProgressCurrent, LIsProgressAbort);
             end;
           end;
-
         {HR_Error:
           begin
             // Erro no download
