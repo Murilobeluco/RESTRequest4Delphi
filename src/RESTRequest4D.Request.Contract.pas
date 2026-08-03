@@ -115,8 +115,10 @@ type
       function Trace: IResponse;
     {$ENDIF}
 
+	{$IF NOT DEFINED(RR4D_SYNAPSE) or IF NOT DEFINED(RR4D_ICS)}
     function AddFieldFormData(const AFieldName: string; const AValue: string): IRequest;
     function AddFieldXWwwForm(const AFieldName: string; const AValue: string): IRequest;
+    {$ENDIF}
 
     {$IF DEFINED(RR4D_NETHTTP)}
       function Asynchronous(const AValue: Boolean): IRequest;
