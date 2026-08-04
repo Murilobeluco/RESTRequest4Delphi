@@ -216,11 +216,15 @@ var
 begin
   cookies := TStringList.Create;
   try
-  {$IF COMPILERVERSION <= 28.0}
-    cookies.Values[ACookieName] := ACookieValue;
-  {$ELSE}
-    cookies.AddPair(ACookieName, ACookieValue);
-  {$ENDIF}
+    {$IFDEF FPC}
+      cookies.Values[ACookieName] := ACookieValue;
+    {$ELSE}
+      {$IF COMPILERVERSION <= 28.0}
+        cookies.Values[ACookieName] := ACookieValue;
+      {$ELSE}
+        cookies.AddPair(ACookieName, ACookieValue);
+      {$ENDIF}
+    {$ENDIF}
   Result := AddCookies(cookies);
   except
     cookies.Free;
@@ -770,13 +774,18 @@ begin
   FIdSSLIOHandlerSocketOpenSSL := TIdSSLIOHandlerSocketOpenSSL.Create;
   FIdHTTP.IOHandler := FIdSSLIOHandlerSocketOpenSSL;
 
-  {$IF COMPILERVERSION > 28.0}
-    FIdSSLIOHandlerSocketOpenSSL.SSLOptions.SSLVersions := FIdSSLIOHandlerSocketOpenSSL.SSLOptions.SSLVersions +
-      [sslvSSLv2, sslvSSLv23, sslvSSLv3, sslvTLSv1, sslvTLSv1_1, sslvTLSv1_2];
-  {$ELSE}
-    FIdSSLIOHandlerSocketOpenSSL.SSLOptions.SSLVersions := FIdSSLIOHandlerSocketOpenSSL.SSLOptions.SSLVersions +
-      [sslvTLSv1, sslvTLSv1_1, sslvTLSv1_2];
-  {$ENDIF}
+  {$IFDEF FPC}
+     FIdSSLIOHandlerSocketOpenSSL.SSLOptions.SSLVersions := FIdSSLIOHandlerSocketOpenSSL.SSLOptions.SSLVersions +
+       [sslvSSLv2, sslvSSLv23, sslvSSLv3, sslvTLSv1, sslvTLSv1_1, sslvTLSv1_2];
+   {$ELSE}
+     {$IF COMPILERVERSION > 28.0}
+       FIdSSLIOHandlerSocketOpenSSL.SSLOptions.SSLVersions := FIdSSLIOHandlerSocketOpenSSL.SSLOptions.SSLVersions +
+         [sslvSSLv2, sslvSSLv23, sslvSSLv3, sslvTLSv1, sslvTLSv1_1, sslvTLSv1_2];
+     {$ELSE}
+       FIdSSLIOHandlerSocketOpenSSL.SSLOptions.SSLVersions := FIdSSLIOHandlerSocketOpenSSL.SSLOptions.SSLVersions +
+         [sslvTLSv1, sslvTLSv1_1, sslvTLSv1_2];
+     {$ENDIF}
+   {$ENDIF}
 
   FIdSSLIOHandlerSocketOpenSSL.OnStatusInfoEx := Self.OnStatusInfoEx;
 
